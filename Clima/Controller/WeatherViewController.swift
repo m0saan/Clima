@@ -14,6 +14,9 @@ class WeatherViewController: UIViewController {
     var weatherManger = WeatherManager()
     let locationManager = CLLocationManager()
     
+    var lat: Float = 0.0
+    var lon: Float = 0.0
+    
     @IBOutlet weak var conditionImageView: UIImageView!
     @IBOutlet weak var temperatureLabel: UILabel!
     @IBOutlet weak var cityLabel: UILabel!
@@ -28,6 +31,12 @@ class WeatherViewController: UIViewController {
         
         locationManager.requestWhenInUseAuthorization()
         locationManager.requestLocation()
+    }
+    
+    @IBAction func currentLocationPressed(_ sender: UIButton) {
+        locationManager.requestLocation()
+        weatherManger.fetchWeather(latitude: lat, longitude: lon)
+        
     }
 }
 
@@ -86,9 +95,10 @@ extension WeatherViewController: WeatherMangerDelegate {
 extension WeatherViewController: CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         if let location = locations.last {
-            let lat = location.coordinate.latitude
-            let lon = location.coordinate.longitude
-            weatherManger.fetchWeather(latitude: Float(lat), longitude: Float(lon))
+            locationManager.stopUpdatingLocation()
+            lat = Float(location.coordinate.latitude)
+            lon = Float(location.coordinate.longitude)
+            weatherManger.fetchWeather(latitude: lat, longitude: lon)
         }
     }
     
