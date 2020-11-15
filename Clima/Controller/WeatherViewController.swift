@@ -7,11 +7,12 @@
 //
 
 import UIKit
+import CoreLocation
 
-class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManagerDelegate {
+class WeatherViewController: UIViewController {
     
-    
-    var  weatherManager = WeatherManager()
+    var weatherManger = WeatherManager()
+    let locationManager = CLLocationManager()
     
     @IBOutlet weak var conditionImageView: UIImageView!
     @IBOutlet weak var temperatureLabel: UILabel!
@@ -20,38 +21,78 @@ class WeatherViewController: UIViewController, UITextFieldDelegate, WeatherManag
     
     override func viewDidLoad() {
         super.viewDidLoad()
+        
         textFieldLabel.delegate = self
-        weatherManager.delegate = self
+        weatherManger.delegate = self
+        locationManager.delegate = self
+        
+        locationManager.requestWhenInUseAuthorization()
+        locationManager.requestLocation()
     }
+}
 
+// MARK: - UITextFieldDelegate
+
+extension WeatherViewController: UITextFieldDelegate {
+    
     @IBAction func searchPressed(_ sender: UIButton) {
         textFieldLabel.endEditing(true)
+        print(textFieldLabel.text!)
     }
     
     func textFieldShouldReturn(_ textField: UITextField) -> Bool {
-        textField.endEditing(true)
+        textFieldLabel.endEditing(true)
+        print(textFieldLabel.text!)
         return true
+    }
+    
+    func textFieldDidEndEditing(_ textField: UITextField) {
+        if let cityName = textField.text{
+            weatherManger.fetchWeather(cityName)
+        }
+        textField.text = ""
     }
     
     func textFieldShouldEndEditing(_ textField: UITextField) -> Bool {
         if textField.text != "" {
+            textField.placeholder = "Search"
             return true
         } else {
-            textField.placeholder = "Type something"
+            textField.placeholder = "Please enter a city name"
             return false
         }
     }
-    
-    func textFieldDidEndEditing(_ textField: UITextField) {
-        if let cityName = textField.text {
-            weatherManager.fetchWeather(city: cityName) 
-        }
-        textFieldLabel.text = ""
-    }
-    
-    func didUpdateWeather(weather: WeatherModel) {
-        print(weather.temperature)
-    }
-    
 }
 
+// MARK: - WeatherMangerDelegate
+
+extension WeatherViewController: WeatherMangerDelegate {
+    
+    func didUpdateWeatherManager(_ weatherManager: WeatherManager, weather: WeatherModel) {
+        DispatchQueue.main.sync {
+            self.temperatureLabel.text = weather.temperatureString
+            self.conditionImageView.image = UIImage(systemName: weather.weatherCondion)
+            cityLabel.text = weather.cityName
+        }
+    }
+    
+    func didFailWithError(error: Error) {
+        print(error)
+    }
+}
+
+// MARK: - CLLocationManagerDelegate
+
+extension WeatherViewController: CLLocationManagerDelegate {
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        if let location = locations.last {
+            let lat = location.coordinate.latitude
+            let lon = location.coordinate.longitude
+            weatherManger.fetchWeather(latitude: Float(lat), longitude: Float(lon))
+        }
+    }
+    
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Swift.Error) {
+        print("Error is: \(error)")
+    }
+}
