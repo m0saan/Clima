@@ -6,19 +6,19 @@
 //  Copyright © 2020 App Brewery. All rights reserved.
 //
 
-import UIKit
+import Foundation
 
-struct WeatherModel {
-    let conditionId: Int
+struct WeatherModel{
     let cityName: String
+    let conditionID: Int
     let temperature: Float
     
     var temperatureString: String {
         return String(format: "%.1f", temperature)
     }
     
-    var conditionName: String {
-        switch conditionId {
+    var weatherCondion: String{
+        switch conditionID {
         case 200...232:
             return "cloud.bolt"
         case 300...321:
